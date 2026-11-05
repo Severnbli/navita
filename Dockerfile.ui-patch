@@ -1,0 +1,23 @@
+# Rebuilds only the web UI from this branch and puts it on top of the
+# official Kavita image of the same version. The backend is untouched.
+#
+#   docker build -f Dockerfile.ui-patch -t kavita:0.9.1-anchorfix .
+#
+# KAVITA_TAG must match the version this branch is based on (v0.9.1.4 = tag 0.9.1).
+
+ARG KAVITA_TAG=0.9.1
+
+FROM node:24 AS ui
+WORKDIR /src/UI/Web
+COPY UI/Web/package.json UI/Web/package-lock.json ./
+RUN npm ci --legacy-peer-deps
+COPY UI/Web/ ./
+RUN npm run prod
+
+FROM jvmilazz0/kavita:${KAVITA_TAG}
+LABEL org.opencontainers.image.source="https://github.com/Severnbli/Kavita/tree/fix/book-reader-anchor-scroll" \
+      org.opencontainers.image.licenses="GPL-3.0" \
+      org.opencontainers.image.description="Unofficial Kavita build: official image with a patched web UI (book reader anchor scrolling fix)"
+RUN rm -rf /kavita/wwwroot/*
+COPY --from=ui /src/UI/Web/dist/browser/ /kavita/wwwroot/
+COPY --from=ui /src/UI/Web/dist/3rdpartylicenses.txt /kavita/wwwroot/

@@ -1,0 +1,6 @@
+.git
+UI/Web/node_modules
+UI/Web/dist
+_output
+**/bin
+**/obj
