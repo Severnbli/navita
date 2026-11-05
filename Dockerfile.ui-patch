@@ -15,7 +15,7 @@ COPY UI/Web/ ./
 RUN npm run prod
 
 FROM jvmilazz0/kavita:${KAVITA_TAG}
-LABEL org.opencontainers.image.source="https://github.com/Severnbli/Kavita/tree/fix/book-reader-anchor-scroll" \
+LABEL org.opencontainers.image.source="https://github.com/Severnbli/navita/tree/fix/book-reader-anchor-scroll" \
       org.opencontainers.image.licenses="GPL-3.0" \
       org.opencontainers.image.description="Unofficial Kavita build: official image with a patched web UI (book reader anchor scrolling fix)"
 RUN rm -rf /kavita/wwwroot/*
