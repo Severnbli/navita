@@ -2170,7 +2170,9 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
         afterFrame(() => this.scrollService.scrollToX(scrollLeft, this.reader().nativeElement, 'smooth'));
         break;
       case WritingStyle.Horizontal:
-        const fromTopOffset = element.getBoundingClientRect().top + window.scrollY + TOP_OFFSET;
+        // The reader container scrolls, not the window, so the offset must be relative to the container
+        const reader = this.reader().nativeElement;
+        const fromTopOffset = element.getBoundingClientRect().top - reader.getBoundingClientRect().top + reader.scrollTop + TOP_OFFSET;
         // We need to use a delay as webkit browsers (aka Apple devices) don't always have the document rendered by this point
         afterFrame(() => this.scrollService.scrollTo(fromTopOffset, this.reader().nativeElement));
     }
