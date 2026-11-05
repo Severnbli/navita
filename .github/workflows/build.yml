@@ -1,0 +1,200 @@
+name: Build Navita image
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Rebuild even if this version and commit are already published
+        type: boolean
+        default: false
+  schedule:
+    - cron: '17 4 * * *'
+  push:
+    branches: [navita]
+    paths:
+      - 'patches/**'
+      - 'docker/**'
+      - 'NOTICE.template.md'
+      - '.github/workflows/build.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: navita-build
+  cancel-in-progress: false
+
+env:
+  IMAGE: severnbli/navita
+  UPSTREAM_REPO: Kareadita/Kavita
+  BASE_REPO: jvmilazz0/kavita
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out build scripts
+        uses: actions/checkout@v5
+        with:
+          path: navita
+
+      - name: Resolve latest Kavita release and matching official image
+        id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ inputs.force || false }}
+        run: |
+          set -euo pipefail
+          tag=$(gh api "repos/$UPSTREAM_REPO/releases/latest" --jq .tag_name)
+          version=${tag#v}
+
+          # Pin the official image by digest and make sure it really is that release
+          digest=$(docker buildx imagetools inspect "$BASE_REPO:latest" --format '{{json .Manifest}}' | jq -r .digest)
+          base="$BASE_REPO@$digest"
+          base_version=$(docker run --rm --platform linux/amd64 --entrypoint cat "$base" /kavita/Kavita.Server.deps.json \
+            | jq -r '[.. | objects | .["Kavita.Common.dll"]? // empty | .assemblyVersion] | first')
+          if [ "$base_version" != "$version" ]; then
+            echo "::error::Latest release is $tag, but $BASE_REPO:latest is $base_version. Not building a mismatched image."
+            exit 1
+          fi
+
+          rev=$(git -C navita rev-parse --short=7 HEAD)
+          build_tag="$version-navita.$rev"
+          release="v$build_tag"
+
+          skip=false
+          if [ "$FORCE" != "true" ] \
+             && docker buildx imagetools inspect "$IMAGE:$build_tag" >/dev/null 2>&1 \
+             && gh release view "$release" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            skip=true
+            echo "::notice::$IMAGE:$build_tag is already published, nothing to do"
+          fi
+
+          {
+            echo "tag=$tag"
+            echo "version=$version"
+            echo "base=$base"
+            echo "build_tag=$build_tag"
+            echo "release=$release"
+            echo "skip=$skip"
+          } >> "$GITHUB_OUTPUT"
+          echo "Kavita $tag, base $base, build $build_tag, skip=$skip"
+
+      - name: Check out Kavita release
+        if: steps.v.outputs.skip != 'true'
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ env.UPSTREAM_REPO }}
+          ref: ${{ steps.v.outputs.tag }}
+          path: src
+          persist-credentials: false
+
+      - name: Apply patches
+        if: steps.v.outputs.skip != 'true'
+        working-directory: src
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git am --3way ../navita/patches/*.patch
+          git log --oneline -n "$(ls ../navita/patches/*.patch | wc -l)"
+
+      - name: Write GPL notice
+        if: steps.v.outputs.skip != 'true'
+        env:
+          TAG: ${{ steps.v.outputs.tag }}
+          BASE: ${{ steps.v.outputs.base }}
+          RELEASE: ${{ steps.v.outputs.release }}
+        run: |
+          set -euo pipefail
+          mkdir -p notice
+          sed -e "s|__TAG__|$TAG|g" -e "s|__REPO__|$GITHUB_REPOSITORY|g" -e "s|__BASE_IMAGE__|$BASE|g" \
+              -e "s|__RELEASE__|$RELEASE|g" -e "s|__NAVITA_SHA__|$GITHUB_SHA|g" \
+              navita/NOTICE.template.md > notice/NAVITA-NOTICE.md
+          cat notice/NAVITA-NOTICE.md
+
+      - name: Publish corresponding source
+        if: steps.v.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.v.outputs.tag }}
+          VERSION: ${{ steps.v.outputs.version }}
+          RELEASE: ${{ steps.v.outputs.release }}
+          BASE: ${{ steps.v.outputs.base }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          git -C src archive --format=tar.gz --prefix="kavita-$VERSION-navita/" \
+            -o "$PWD/dist/kavita-$VERSION-navita-source.tar.gz" HEAD
+          git -C navita archive --format=tar.gz --prefix="navita-build/" \
+            -o "$PWD/dist/navita-build-scripts.tar.gz" HEAD
+          cp notice/NAVITA-NOTICE.md dist/
+
+          cat > notes.md <<EOF
+          Unofficial Kavita build based on [Kavita $TAG](https://github.com/$UPSTREAM_REPO/releases/tag/$TAG).
+          Not affiliated with the Kavita project.
+
+          Docker image: \`$IMAGE:${RELEASE#v}\` (also \`$IMAGE:$VERSION\` and \`$IMAGE:latest\` at the time of this build).
+          Base image: \`$BASE\`
+
+          Complete corresponding source under the GNU GPL v3:
+          - \`kavita-$VERSION-navita-source.tar.gz\` – Kavita $TAG with the patches from \`patches/\` applied
+          - \`navita-build-scripts.tar.gz\` – the patches, Dockerfile and workflow used for this build
+          EOF
+
+          if gh release view "$RELEASE" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$RELEASE" dist/* --clobber -R "$GITHUB_REPOSITORY"
+          else
+            gh release create "$RELEASE" dist/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "Navita ${RELEASE#v}" --notes-file notes.md
+          fi
+
+      - name: Set up QEMU
+        if: steps.v.outputs.skip != 'true'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        if: steps.v.outputs.skip != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: steps.v.outputs.skip != 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        if: steps.v.outputs.skip != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: src
+          file: navita/docker/Dockerfile
+          build-contexts: navita=notice
+          build-args: BASE_IMAGE=${{ steps.v.outputs.base }}
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ steps.v.outputs.version }}
+            ${{ env.IMAGE }}:${{ steps.v.outputs.build_tag }}
+          labels: |
+            org.opencontainers.image.title=Navita
+            org.opencontainers.image.description=Unofficial modified Kavita ${{ steps.v.outputs.tag }}, not affiliated with the Kavita project
+            org.opencontainers.image.version=${{ steps.v.outputs.build_tag }}
+            org.opencontainers.image.licenses=GPL-3.0
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}/releases/tag/${{ steps.v.outputs.release }}
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}/tree/navita
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.base.name=${{ steps.v.outputs.base }}
+
+      - name: Update Docker Hub description
+        if: steps.v.outputs.skip != 'true'
+        continue-on-error: true
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ env.IMAGE }}
+          short-description: Unofficial Kavita build with a book reader fix. Not affiliated with Kavita. GPL-3.0
+          readme-filepath: navita/README.md

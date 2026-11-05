@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Usevalad Buben <usevaladbuben@gmail.com>
+Date: Thu, 5 Nov 2026 21:40:47 +0300
+Subject: [PATCH] Fix book reader anchor scrolling in scroll layout
+
+In the default (scroll) layout the reader container scrolls, not the
+window, so window.scrollY is always 0. The target offset ignored the
+container's current scroll position: footnote links undershot and back
+links jumped to the start of the chapter. Compute the offset relative
+to the reader container instead.
+---
+ .../_components/book-reader/book-reader.component.ts         | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/UI/Web/src/app/book-reader/_components/book-reader/book-reader.component.ts b/UI/Web/src/app/book-reader/_components/book-reader/book-reader.component.ts
+index 9b75098..53861de 100644
+--- a/UI/Web/src/app/book-reader/_components/book-reader/book-reader.component.ts
++++ b/UI/Web/src/app/book-reader/_components/book-reader/book-reader.component.ts
+@@ -2170,7 +2170,10 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
+         afterFrame(() => this.scrollService.scrollToX(scrollLeft, this.reader().nativeElement, 'smooth'));
+         break;
+       case WritingStyle.Horizontal:
+-        const fromTopOffset = element.getBoundingClientRect().top + window.scrollY + TOP_OFFSET;
++        // Modified by Severnbli for Navita (unofficial Kavita build), 2026-11-05:
++        // the reader container scrolls, not the window, so the offset must be relative to the container
++        const reader = this.reader().nativeElement;
++        const fromTopOffset = element.getBoundingClientRect().top - reader.getBoundingClientRect().top + reader.scrollTop + TOP_OFFSET;
+         // We need to use a delay as webkit browsers (aka Apple devices) don't always have the document rendered by this point
+         afterFrame(() => this.scrollService.scrollTo(fromTopOffset, this.reader().nativeElement));
+     }
