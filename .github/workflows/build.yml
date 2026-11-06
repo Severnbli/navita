@@ -13,6 +13,8 @@ on:
     branches: [navita]
     paths:
       - 'patches/**'
+      - 'translations/**'
+      - 'scripts/**'
       - 'docker/**'
       - 'NOTICE.md'
       - '.github/workflows/build.yml'
@@ -98,6 +100,16 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git am --3way ../navita/patches/*.patch
           git log --oneline -n "$(ls ../navita/patches/*.patch | wc -l)"
+
+      - name: Merge translations
+        if: steps.v.outputs.skip != 'true'
+        working-directory: src
+        run: |
+          set -euo pipefail
+          python3 ../navita/scripts/merge-translations.py .
+          git add -A
+          git diff --cached --quiet || git commit -q -m "Add translations from Navita" -m "Strings from translations/ merged by scripts/merge-translations.py"
+          git log --oneline -n 1
 
       - name: Write GPL notice
         if: steps.v.outputs.skip != 'true'
