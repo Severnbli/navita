@@ -6,10 +6,13 @@ Usage: merge-translations.py <kavita-source-dir>
 translations/<lang>/ui.json     -> UI/Web/src/assets/langs/<lang>.json
 translations/<lang>/server.json -> Kavita.Server/I18N/<lang>.json
 
-A string from translations/ is used when upstream has no translation for that
-key or still has the English text. Translations made upstream always win, keys
-that no longer exist in en.json are dropped. The result follows the key order
-of en.json. Keys that stay untranslated are reported as GitHub warnings.
+A string from <name>.json is used when upstream has no translation for that key
+or still has the English text, otherwise the upstream translation wins.
+A string from <name>-overrides.json always replaces the upstream one (used for
+upstream translations that are wrong or too long for the layout).
+Keys that no longer exist in en.json are dropped and reported as stale. Upstream
+keys keep their order and new keys are placed next to their en.json neighbour.
+Keys that stay untranslated are reported as GitHub warnings.
 """
 
 import json
@@ -27,8 +30,8 @@ def load(path):
         return json.load(f)
 
 
-def merge(en, upstream, ours, path, stats):
-    """Return upstream merged with ours.
+def merge(en, upstream, ours, forced, path, stats):
+    """Return upstream merged with ours (fills) and forced (overrides).
 
     Upstream keys keep their order. A new key is placed after the key that
     precedes it in en.json, so the diff against upstream stays small.
@@ -38,9 +41,13 @@ def merge(en, upstream, ours, path, stats):
         name = f"{path}.{key}" if path else key
         up = upstream.get(key)
         mine = ours.get(key)
+        force = forced.get(key)
         if isinstance(en_value, dict):
-            values[key] = merge(en_value, up if isinstance(up, dict) else {},
-                                mine if isinstance(mine, dict) else {}, name, stats)
+            sub = lambda d: d if isinstance(d, dict) else {}
+            values[key] = merge(en_value, sub(up), sub(mine), sub(force), name, stats)
+        elif isinstance(force, str):
+            values[key] = force
+            stats["overridden"] += 1
         elif isinstance(mine, str) and (up is None or up == en_value):
             values[key] = mine
             stats["applied"] += 1
@@ -50,7 +57,7 @@ def merge(en, upstream, ours, path, stats):
                 stats["upstream"] += 1
         else:
             stats["missing"].append(name)
-    for key in ours:
+    for key in [*ours, *forced]:
         if key not in en:
             stats["stale"].append(f"{path}.{key}" if path else key)
 
@@ -75,18 +82,21 @@ def main():
         lang = lang_dir.name
         for file_name, target_dir in TARGETS.items():
             ours_path = lang_dir / file_name
-            if not ours_path.exists():
+            forced_path = lang_dir / file_name.replace(".json", "-overrides.json")
+            if not ours_path.exists() and not forced_path.exists():
                 continue
             target = src / target_dir / f"{lang}.json"
             en = load(src / target_dir / "en.json")
             upstream = load(target) if target.exists() else {}
-            stats = {"applied": 0, "upstream": 0, "missing": [], "stale": []}
-            merged = merge(en, upstream, load(ours_path), "", stats)
+            stats = {"applied": 0, "overridden": 0, "upstream": 0, "missing": [], "stale": []}
+            ours = load(ours_path) if ours_path.exists() else {}
+            forced = load(forced_path) if forced_path.exists() else {}
+            merged = merge(en, upstream, ours, forced, "", stats)
             with open(target, "w", encoding="utf-8") as f:
                 json.dump(merged, f, ensure_ascii=False, indent=4)
                 f.write("\n")
 
-            print(f"{target}: {stats['applied']} strings added, "
+            print(f"{target}: {stats['applied']} strings added, {stats['overridden']} overridden, "
                   f"{stats['upstream']} already translated upstream, "
                   f"{len(stats['stale'])} stale, {len(stats['missing'])} untranslated")
             if stats["stale"]:
