@@ -23,8 +23,13 @@ modified source files.
   against the window instead of the scrolling reader container.
 - 2026-11-06 – UI/Web/src/assets/langs/ru.json and Kavita.Server/I18N/ru.json:
   the Russian translation of the web UI and the server was completed. Strings
-  missing from the upstream translation or still in English were added from
-  translations/ru/ by scripts/merge-translations.py.
+  missing from the upstream translation or still in English were added, and
+  upstream strings that were wrong, outdated or too long for phone screens were
+  replaced, from translations/ru/ by scripts/merge-translations.py.
+- 2026-11-06 – UI/Web/src/main.ts, UI/Web/src/assets/langs/en.json and
+  UI/Web/src/app/manga-reader/_components/manga-reader/manga-reader.component.html:
+  texts that could not be translated (the built-in table messages and the
+  "Layout Mode" label of the manga reader) now use translation keys.
 
 Only the web UI (/kavita/wwwroot) and the server translations (/kavita/I18N)
 are replaced. Everything else in this image is taken unchanged from the
