@@ -150,8 +150,8 @@ jobs:
           Base image: \`$BASE\`
 
           Complete corresponding source under the GNU GPL v3:
-          - \`kavita-$VERSION-navita-source.tar.gz\` – Kavita $TAG with the patches from \`patches/\` applied
-          - \`navita-build-scripts.tar.gz\` – the patches, Dockerfile and workflow used for this build
+          - \`kavita-$VERSION-navita-source.tar.gz\` – Kavita $TAG with the patches from \`patches/\` applied and \`translations/\` merged
+          - \`navita-build-scripts.tar.gz\` – the patches, translations, scripts, Dockerfile and workflow used for this build
           EOF
 
           if gh release view "$RELEASE" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
@@ -192,7 +192,7 @@ jobs:
             ${{ env.IMAGE }}:${{ steps.v.outputs.build_tag }}
           labels: |
             org.opencontainers.image.title=Navita
-            org.opencontainers.image.description=Unofficial modified Kavita ${{ steps.v.outputs.tag }}, not affiliated with the Kavita project
+            org.opencontainers.image.description=Unofficial modified Kavita ${{ steps.v.outputs.tag }} with fixes and a complete Russian translation, not affiliated with the Kavita project
             org.opencontainers.image.version=${{ steps.v.outputs.build_tag }}
             org.opencontainers.image.licenses=GPL-3.0
             org.opencontainers.image.source=https://github.com/${{ github.repository }}/releases/tag/${{ steps.v.outputs.release }}
@@ -208,5 +208,5 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{ env.IMAGE }}
-          short-description: Unofficial Kavita build with a book reader fix. Not affiliated with Kavita. GPL-3.0
+          short-description: Unofficial Kavita build with fixes and a complete Russian translation. Not affiliated with Kavita
           readme-filepath: navita/README.md
