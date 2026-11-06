@@ -1,0 +1,105 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Usevalad Buben <usevaladbuben@gmail.com>
+Date: Fri, 6 Nov 2026 11:36:41 +0300
+Subject: [PATCH] Translate hardcoded UI texts
+
+The manga reader settings had a hardcoded "Layout Mode" label and
+ngx-datatable showed its built-in English messages ("No data to
+display", "total", pager labels). Use translation keys for both; the
+datatable messages are provided globally and read through Transloco
+when a table is created.
+---
+ .../manga-reader/manga-reader.component.html  |  2 +-
+ UI/Web/src/assets/langs/en.json               | 16 ++++++++++++++
+ UI/Web/src/main.ts                            | 21 ++++++++++++++++++-
+ 3 files changed, 37 insertions(+), 2 deletions(-)
+
+diff --git a/UI/Web/src/app/manga-reader/_components/manga-reader/manga-reader.component.html b/UI/Web/src/app/manga-reader/_components/manga-reader/manga-reader.component.html
+index 6f0840e..aa97a28 100644
+--- a/UI/Web/src/app/manga-reader/_components/manga-reader/manga-reader.component.html
++++ b/UI/Web/src/app/manga-reader/_components/manga-reader/manga-reader.component.html
+@@ -212,7 +212,7 @@
+ 
+               <div class="row mb-2">
+                 <div class="col-md-6 col-sm-12">
+-                  <label for="layout-mode" class="form-label">Layout Mode</label>&nbsp;
++                  <label for="layout-mode" class="form-label">{{t('layout-mode-label')}}</label>&nbsp;
+                   @switch (layoutMode) {
+                     @case (LayoutMode.Single) {
+                       <div class="split-double">
+diff --git a/UI/Web/src/assets/langs/en.json b/UI/Web/src/assets/langs/en.json
+index 9183ff8..93e6844 100644
+--- a/UI/Web/src/assets/langs/en.json
++++ b/UI/Web/src/assets/langs/en.json
+@@ -3365,6 +3365,7 @@
+         "settings-tooltip": "Settings",
+         "image-splitting-label": "Image Splitting",
+         "image-scaling-label": "Image Scaling",
++        "layout-mode-label": "{{manage-reading-profiles.layout-mode-label}}",
+         "height": "Height",
+         "width": "Width",
+         "width-override-label": "Width Override",
+@@ -4823,6 +4824,21 @@
+         "issue-num-shorthand": "#{{num}}",
+         "volume-num-shorthand": "Vol {{num}}",
+         "libraries": "Libraries"
++    },
++
++    "datatable": {
++        "empty-message": "{{common.no-data}}",
++        "total-message": "total",
++        "selected-message": "selected",
++        "first-page-alt": "go to first page",
++        "page-alt": "page",
++        "previous-page-alt": "go to previous page",
++        "next-page-alt": "go to next page",
++        "last-page-alt": "go to last page",
++        "select-row-alt": "Select row",
++        "select-all-alt": "Select all rows",
++        "select-group-alt": "Select row group",
++        "loading-alt": "{{common.loading}}"
+     }
+ 
+ }
+diff --git a/UI/Web/src/main.ts b/UI/Web/src/main.ts
+index f4f2824..a0787a7 100644
+--- a/UI/Web/src/main.ts
++++ b/UI/Web/src/main.ts
+@@ -10,7 +10,8 @@ import {bootstrapApplication, BrowserModule, Title} from '@angular/platform-brow
+ import {jwtInterceptor} from './app/_interceptors/jwt.interceptor';
+ import {errorInterceptor} from './app/_interceptors/error.interceptor';
+ import {provideHttpClient, withInterceptors} from '@angular/common/http';
+-import {provideTransloco, TranslocoConfig, TranslocoService} from "@jsverse/transloco";
++import {provideTransloco, translate, TranslocoConfig, TranslocoService} from "@jsverse/transloco";
++import {providedNgxDatatableConfig} from "@siemens/ngx-datatable";
+ import {environment} from "./environments/environment";
+ import {AccountService} from "./app/_services/account.service";
+ import {catchError, firstValueFrom, of, switchMap, tap} from "rxjs";
+@@ -179,6 +180,24 @@ bootstrapApplication(AppComponent, {
+           withNavigationErrorHandler(routingErrorHandler),
+           ),
+         provideTransloco(translocoOptions),
++        // Modified by Severnbli for Navita (unofficial Kavita build), 2026-11-06:
++        // translate the built-in ngx-datatable texts. The getters are read when a table is created.
++        providedNgxDatatableConfig({
++          messages: {
++            get emptyMessage() { return translate('datatable.empty-message'); },
++            get totalMessage() { return translate('datatable.total-message'); },
++            get selectedMessage() { return translate('datatable.selected-message'); },
++            get ariaFirstPageMessage() { return translate('datatable.first-page-alt'); },
++            get ariaPageNMessage() { return translate('datatable.page-alt'); },
++            get ariaPreviousPageMessage() { return translate('datatable.previous-page-alt'); },
++            get ariaNextPageMessage() { return translate('datatable.next-page-alt'); },
++            get ariaLastPageMessage() { return translate('datatable.last-page-alt'); },
++            get ariaRowCheckboxMessage() { return translate('datatable.select-row-alt'); },
++            get ariaHeaderCheckboxMessage() { return translate('datatable.select-all-alt'); },
++            get ariaGroupHeaderCheckboxMessage() { return translate('datatable.select-group-alt'); },
++            get ariaLoadingMessage() { return translate('datatable.loading-alt'); },
++          }
++        }),
+         provideTranslocoLocale({
+           defaultLocale: 'en'
+         }),
+-- 
+2.56.0
+
