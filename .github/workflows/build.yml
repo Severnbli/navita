@@ -14,7 +14,7 @@ on:
     paths:
       - 'patches/**'
       - 'docker/**'
-      - 'NOTICE.template.md'
+      - 'NOTICE.md'
       - '.github/workflows/build.yml'
 
 permissions:
@@ -110,7 +110,7 @@ jobs:
           mkdir -p notice
           sed -e "s|__TAG__|$TAG|g" -e "s|__REPO__|$GITHUB_REPOSITORY|g" -e "s|__BASE_IMAGE__|$BASE|g" \
               -e "s|__RELEASE__|$RELEASE|g" -e "s|__NAVITA_SHA__|$GITHUB_SHA|g" \
-              navita/NOTICE.template.md > notice/NAVITA-NOTICE.md
+              navita/NOTICE.md > notice/NAVITA-NOTICE.md
           cat notice/NAVITA-NOTICE.md
 
       - name: Publish corresponding source
