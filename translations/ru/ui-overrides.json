@@ -1,0 +1,157 @@
+{
+    "manage-oidc-connect": {
+        "reset-label": "Сбросить ID",
+        "require-verified-email-label": "Требовать подтв. почту",
+        "default-roles-label": "Роли",
+        "custom-scopes-label": "Дополнительные scopes"
+    },
+    "manage-auth-keys": {
+        "auth-keys-title": "Ключи авторизации",
+        "last-accessed-label": "Использован",
+        "copy-key": "Копировать"
+    },
+    "dashboard": {
+        "recently-updated-title": "Недавно обновленные",
+        "recently-added-title": "Недавно добавленные"
+    },
+    "edit-user": {
+        "roles-label": "Роли"
+    },
+    "user-preferences": {
+        "blur-unread-summaries-label": "Размывать описания",
+        "collapse-series-relationships-label": "Сворачивать связи",
+        "highlight-bar-label": "Цвета аннотаций",
+        "prompt-for-rereads-after-label": "Повторное чтение",
+        "share-series-reviews-label": "Делиться отзывами",
+        "social-max-age-rating-label": "Макс. возрастной рейтинг",
+        "embed-progress-indicator-label": "Прогресс в заголовке",
+        "include-continue-from-label": "Продолжать с записи"
+    },
+    "font-manager": {
+        "description": "Шрифты, доступные в читалке EPUB. Они сгруппированы по семействам – это название вы выбираете при чтении. В каждом семействе один или несколько файлов с разной насыщенностью и начертаниями. Шрифты можно взять на {{googleFontsLink}}, подробнее – в {{wikiLink}}."
+    },
+    "manage-devices": {
+        "sendto-device-header": "Отправка по почте"
+    },
+    "server-devices": {
+        "client-devices-this-month-header": "Устройства за месяц",
+        "client-devices-mobile-vs-pc-header": "Телефон или ПК за месяц"
+    },
+    "most-active-users": {
+        "title": "Активные читатели"
+    },
+    "role-selector": {
+        "title": "Роли"
+    },
+    "invite-user": {
+        "roles-label": "Роли"
+    },
+    "manage-metadata-settings": {
+        "person-roles-label": "Роли"
+    },
+    "view-edit-annotation-drawer": {
+        "edit": "Изменить"
+    },
+    "book-reader": {
+        "go-to-page-prompt": "Всего страниц: {{totalPages}}. На какую перейти? Нумерация начинается с 1."
+    },
+    "match-series-result-item": {
+        "volume-count": "{{num}} т.",
+        "chapter-count": "{{num}} гл.",
+        "issue-count": "{{num}} вып."
+    },
+    "browse-people": {
+        "roles-label": "Роли"
+    },
+    "person-detail": {
+        "all-roles": "Роли"
+    },
+    "cover-image-chooser": {
+        "drag-n-drop": "Перетащите"
+    },
+    "entity-title": {
+        "single-volume": "Один том"
+    },
+    "manage-email-settings": {
+        "enable-ssl-label": "Использовать SSL"
+    },
+    "manage-library": {
+        "edit-library": "Изменить"
+    },
+    "manage-media-settings": {
+        "pdf-render-resolution-label": "Разрешение PDF",
+        "cover-image-size-label": "Размер обложки"
+    },
+    "manage-scrobble-errors": {
+        "edit-header": "Изменить"
+    },
+    "manage-settings": {
+        "backup-label": "Хранить копии (дней)",
+        "on-deck-last-progress-label": "Срок «На очереди» (дней)",
+        "field-required": "Обязательное поле"
+    },
+    "manage-system": {
+        "installId-title": "ID установки"
+    },
+    "manage-tasks-settings": {
+        "last-executed-header": "Запущено",
+        "convert-media-task": "Конвертировать медиафайлы"
+    },
+    "manage-users": {
+        "edit-user-tooltip": "Изменить",
+        "roles-header": "Роли"
+    },
+    "keybind-setting-description-pipe": {
+        "key-bind-title-bookmark-page": "Страницу в закладки"
+    },
+    "events-widget": {
+        "downloading-item": "Загрузка {{item}}"
+    },
+    "shortcuts-modal": {
+        "bookmark": "Страницу в закладки"
+    },
+    "import-mappings": {
+        "prev": "{{import-cbl.prev}}",
+        "import": "{{import-cbl.import}}",
+        "next": "{{import-cbl.next}}"
+    },
+    "manga-reader": {
+        "left-to-right-alt": "Слева направо",
+        "width-override-label": "Своя ширина",
+        "swipe-enabled-label": "Листание свайпом"
+    },
+    "edit-series-modal": {
+        "volumes-title": "{{tabs.volumes-tab}}"
+    },
+    "edit-volume-modal": {
+        "title": "Изменить"
+    },
+    "server-stats": {
+        "total-tags-label": "Всего меток",
+        "total-tags-tooltip": "Всего меток: {{count}}",
+        "popular-decades-title": "Десятилетия",
+        "most-active-users-title": "Самые активные",
+        "popular-libraries-title": "Топ библиотек",
+        "popular-series-title": "Топ произведений",
+        "popular-reading-lists-title": "Топ списков чтения",
+        "popular-genres-title": "Топ жанров",
+        "popular-tags-title": "Топ меток",
+        "popular-person-title": "Топ: {{role}}",
+        "series-count": "{{num}}",
+        "volume-count": "{{num}}",
+        "file-count": "{{num}}",
+        "genre-count": "{{num}}",
+        "tag-count": "{{num}}",
+        "people-count": "{{num}}"
+    },
+    "customize-sidenav-streams": {
+        "external-sources-title": "{{tabs.external-sources-tab}}"
+    },
+    "toasts": {
+        "series-added-want-to-read": "Произведение добавлено в «Хочу прочитать»"
+    },
+    "common": {
+        "edit": "Изменить",
+        "series-count": "Произведений: {{num}}"
+    }
+}
